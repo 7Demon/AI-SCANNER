@@ -34,6 +34,7 @@ void main() {
   assert(result1.similarityScore == 92, 'Score harus 92');
   assert(result1.status == 'PASS', 'Status harus PASS');
   assert(result1.isMatch == true, 'isMatch harus true');
+  assert(result1.scoreJustification.isNotEmpty, 'scoreJustification harus terisi');
   assert(result1.textAccuracy.match == true, 'textAccuracy harus true');
   assert(result1.colorFidelity.match == true, 'colorFidelity harus true');
   assert(result1.alignment.match == true, 'alignment harus true');
