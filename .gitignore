@@ -8,6 +8,7 @@
 .packages
 build/
 android/.gradle/
+android/.kotlin/
 android/local.properties
 android/captures/
 android/app/build/
