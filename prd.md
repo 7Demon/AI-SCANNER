@@ -44,7 +44,7 @@
 - **Integrasi Langsung ke Google Gemini:**
   - Pengiriman pasangan gambar (Sample + Aktual) langsung ke endpoint Gemini Vision API (`gemini-1.5-flash` / `gemini-2.0-flash`).
   - Pengaturan *System Instruction* & *JSON Structured Output* khusus untuk inspeksi QC cetak karung.
-  - Konfigurasi `GEMINI_API_KEY` otomatis via berkas `.env` (atau disematkan via `--dart-define` saat build APK) sehingga pengguna tidak perlu memasukkan API key secara manual di aplikasi HP.
+  - Pengelolaan API Key fleksibel: Menggunakan Kunci Default (sistem/.env) agar pengguna tidak wajib menginput manual, serta menyediakan menu Pengaturan di dalam aplikasi untuk menambahkan Kunci Kustom dengan validasi testing otomatis sebelum disimpan.
 - **Penyajian Hasil Instan:**
   - Status besar & jelas: **MIRIP (PASS)** (Hijau) / **PERIKSA ULANG (REVIEW)** (Kuning) / **TIDAK MIRIP (REJECT)** (Merah).
   - Skor Kemiripan numerik (0–100%).
@@ -67,11 +67,15 @@
 | **FR-01** | Input Foto Sample | Pengguna dapat mengambil foto karung sample via kamera atau memilih dari galeri. | P0 (Must Have) |
 | **FR-02** | Input Foto Aktual | Pengguna dapat mengambil foto karung hasil cetak aktual via kamera atau memilih dari galeri. | P0 (Must Have) |
 | **FR-03** | Kompresi Klien | Aplikasi mengompresi kedua foto secara lokal di HP sebelum dikirim ke API Gemini. | P0 (Must Have) |
-| **FR-04** | Direct AI Call | Aplikasi mengirim kedua foto bersama prompt QC langsung ke Google Gemini Vision API via HTTPS. | P0 (Must Have) |
+| **FR-04** | Direct AI Call | Aplikasi mengirim foto bersama prompt QC langsung ke Google Gemini Vision API via HTTPS (mendukung `gemini-3.1-flash-lite`, `gemini-3.5-flash-lite`, dll). | P0 (Must Have) |
 | **FR-05** | Parsing Respons | Aplikasi mem-parsing keluaran JSON terstruktur dari Gemini API ke model data aplikasi. | P0 (Must Have) |
 | **FR-06** | Tampilan Hasil | Menampilkan status (MIRIP / TIDAK MIRIP), skor (0–100%), rincian perbandingan, dan rekomendasi. | P0 (Must Have) |
 | **FR-07** | Reset / Scan Ulang | Tombol satu klik untuk membersihkan foto dan siap memindai karung berikutnya. | P0 (Must Have) |
-| **FR-08** | Konfigurasi API Key | Aplikasi membaca Google Gemini API Key secara otomatis dari berkas `.env` aset sehingga operator di lapangan tidak perlu memasukkan API key secara manual. | P0 (Must Have) |
+| **FR-08** | Pengaturan & Validasi API Key | Aplikasi menyediakan Kunci Default bawaan agar langsung siap pakai, sekaligus menyediakan halaman pengaturan untuk menambahkan Kunci Kustom dengan validasi testing sebelum disimpan. | P0 (Must Have) |
+| **FR-09** | Mode 1 Foto (Dijejerkan) | Pengguna dapat menjajarkan karung sample di kiri dan karung aktual di kanan dalam 1 frame foto bersamaan untuk komparasi instan. | P0 (Must Have) |
+| **FR-10** | Analisis Alasan Skor (%) | AI memberikan penjelasan detail alasan di balik perolehan skor persentase (aspek yang identik vs penyebab pengurangan nilai/penalti). | P0 (Must Have) |
+| **FR-11** | Salin Laporan 1-Tap | Tombol satu klik untuk menyalin seluruh ringkasan laporan inspeksi QC ke clipboard untuk dibagikan ke WhatsApp / catatan kerja. | P1 (Nice to Have) |
+| **FR-12** | Ikon Launcher Kustom | Ikon aplikasi Android kustom bertema Industrial QC Scanner menggantikan ikon default Flutter. | P1 (Nice to Have) |
 
 ---
 
@@ -313,7 +317,7 @@ Sesuai kebutuhan pengguna, aplikasi tidak menyimpan data inspeksi ke database lo
 
 ## 19. Acceptance Criteria
 
-- [ ] **AC-1:** Aplikasi membaca nilai `GEMINI_API_KEY` dari file `.env` secara otomatis tanpa memerlukan input manual pengguna di aplikasi HP.
+- [ ] **AC-1:** Aplikasi otomatis menggunakan Kunci Default jika pengguna belum menambahkan kunci manual, dan mampu memvalidasi (testing) API Key kustom baru sebelum menghubungkan dan menyimpannya.
 - [ ] **AC-2:** Pengguna dapat memotret/memilih **Foto Sample** dan **Foto Aktual**.
 - [ ] **AC-3:** Gambar otomatis dikompresi di memori tanpa memberatkan HP.
 - [ ] **AC-4:** Aplikasi mengirimkan kedua gambar langsung ke Gemini Vision API via HTTPS.
