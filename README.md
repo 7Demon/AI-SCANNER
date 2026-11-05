@@ -17,7 +17,7 @@ Aplikasi AIScann dapat langsung dipasang di smartphone Android tanpa perlu setup
 |---|---|---|---|---|
 | ⚡ **ARM64 (Super Ringan)** | `arm64-v8a` | **~15–18 MB** | **Rekomendasi Utama** untuk 95%+ HP Android modern| [⬇️ Download APK (ARM64)](https://github.com/7Demon/AI-SCANNER/releases/latest/download/app-arm64-v8a-release.apk) |
 | 📱 **ARM32** | `armeabi-v7a` | **~15–18 MB** | Untuk perangkat Android tipe lama (32-bit) | [⬇️ Download APK (ARM32)](https://github.com/7Demon/AI-SCANNER/releases/latest/download/app-armeabi-v7a-release.apk) |
-| 📦 **Universal** | `All-in-one` | **~40–50 MB** | Kompatibel dengan semua jenis arsitektur HP Android | [⬇️ Download APK (Universal)](https://github.com/7Demon/AI-SCANNER/releases/latest/download/app-release.apk) |
+| 💻 **x86_64** | `x86_64` | **~20 MB** | Untuk Android Emulator / OS Android di PC & Chromebook | [⬇️ Download APK (x86_64)](https://github.com/7Demon/AI-SCANNER/releases/latest/download/app-x86_64-release.apk) |
 
 > 💡 Kunjungi halaman **[GitHub Releases](https://github.com/7Demon/AI-SCANNER/releases)** untuk melihat catatan rilis lengkap, changelog, dan mengunduh seluruh aset rilis.
 
