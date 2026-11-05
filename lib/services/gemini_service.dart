@@ -421,16 +421,31 @@ Kembalikan HANYA dokumen JSON dengan struktur persis seperti ini:
       }
     };
 
-    final http.Response response;
-    try {
-      response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode(requestBody),
-      ).timeout(const Duration(seconds: 45));
-    } catch (e) {
+    http.Response? response;
+    Object? lastError;
+
+    for (int attempt = 1; attempt <= 2; attempt++) {
+      try {
+        response = await http.post(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode(requestBody),
+        ).timeout(const Duration(seconds: 40));
+
+        // Jika berhasil atau error client non-transien (400, 401, 403, 404), jangan retry
+        if (response.statusCode != 429 && response.statusCode != 503) {
+          break;
+        }
+      } catch (e) {
+        lastError = e;
+        if (attempt == 2) break;
+      }
+      await Future.delayed(const Duration(milliseconds: 1500));
+    }
+
+    if (response == null) {
       throw Exception(
-        'Gagal menghubungi server Gemini: Pastikan koneksi internet aktif. ($e)',
+        'Gagal menghubungi server Gemini: Pastikan koneksi internet stabil. ($lastError)',
       );
     }
 
