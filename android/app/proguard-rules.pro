@@ -6,6 +6,9 @@
 -keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
 
+# Suppress Play Core warnings (used optionally by Flutter deferred components)
+-dontwarn com.google.android.play.core.**
+
 # OpenFilex
 -keep class com.crazecoder.openfile.** { *; }
 
