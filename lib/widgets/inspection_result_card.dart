@@ -1,16 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/inspection_result.dart';
+import '../services/report_service.dart';
 
-class InspectionResultCard extends StatelessWidget {
+class InspectionResultCard extends StatefulWidget {
   final InspectionResult result;
   final VoidCallback onReset;
+  final Uint8List? sampleImageBytes;
+  final Uint8List? actualImageBytes;
+  final bool isSingleMode;
 
   const InspectionResultCard({
     super.key,
     required this.result,
     required this.onReset,
+    this.sampleImageBytes,
+    this.actualImageBytes,
+    this.isSingleMode = false,
   });
+
+  @override
+  State<InspectionResultCard> createState() => _InspectionResultCardState();
+}
+
+class _InspectionResultCardState extends State<InspectionResultCard> {
+  InspectionResult get result => widget.result;
+  VoidCallback get onReset => widget.onReset;
+  bool _isExportingPdf = false;
 
   Color _getStatusPrimaryColor() {
     switch (result.status.toUpperCase()) {
@@ -130,6 +146,91 @@ ${result.recommendations}
         duration: Duration(seconds: 2),
       ),
     );
+  }
+
+  Future<void> _downloadPdfReport(BuildContext context) async {
+    if (_isExportingPdf) return;
+
+    setState(() {
+      _isExportingPdf = true;
+    });
+
+    try {
+      final exportResult = await ReportService.exportAndSavePdf(
+        result,
+        sampleImageBytes: widget.sampleImageBytes,
+        actualImageBytes: widget.actualImageBytes,
+        isSingleMode: widget.isSingleMode,
+      );
+      if (!mounted) return;
+
+      setState(() {
+        _isExportingPdf = false;
+      });
+
+      if (exportResult.isSuccess && exportResult.filePath != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFF0F172A),
+            duration: const Duration(seconds: 6),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            content: Row(
+              children: [
+                const Icon(Icons.check_circle_outline, color: Color(0xFF2DD4BF), size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Laporan PDF Berhasil Disimpan!',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Colors.white),
+                      ),
+                      Text(
+                        exportResult.fileName ?? 'Laporan_QC.pdf',
+                        style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            action: SnackBarAction(
+              label: 'BUKA PDF',
+              textColor: const Color(0xFF2DD4BF),
+              onPressed: () {
+                ReportService.openPdfFile(exportResult.filePath!);
+              },
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFFB91C1C),
+            content: Text(exportResult.message),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isExportingPdf = false;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: const Color(0xFFB91C1C),
+            content: Text('Gagal membuat laporan: $e'),
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -544,61 +645,106 @@ ${result.recommendations}
 
                 const SizedBox(height: 18),
 
-                // 4. Tombol Aksi Utama (Reset & Salin Laporan)
-                Row(
+                // 4. Tombol Aksi Utama (Download Laporan PDF, Salin Teks, Reset)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Tombol Salin Laporan ke Clipboard / WA
-                    Expanded(
-                      flex: 2,
-                      child: SizedBox(
-                        height: 48,
-                        child: OutlinedButton.icon(
-                          onPressed: () => _copyReportToClipboard(context),
-                          icon: const Icon(Icons.copy, size: 16),
-                          label: const Text(
-                            'Salin Laporan',
-                            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    // Tombol Download Laporan PDF (Resmi)
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton.icon(
+                        onPressed: _isExportingPdf ? null : () => _downloadPdfReport(context),
+                        icon: _isExportingPdf
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Icon(Icons.picture_as_pdf_rounded, size: 19),
+                        label: Text(
+                          _isExportingPdf
+                              ? 'Menyiapkan Laporan PDF...'
+                              : 'Download Laporan Resmi (PDF)',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.2,
                           ),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 8),
-                            foregroundColor: const Color(0xFF334155),
-                            side: const BorderSide(color: Color(0xFFCBD5E1)),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF0F766E), // Teal 700
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
+                          elevation: 1,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(height: 10),
 
-                    // Tombol Scan Ulang / Karung Lainnya
-                    Expanded(
-                      flex: 3,
-                      child: SizedBox(
-                        height: 48,
-                        child: ElevatedButton.icon(
-                          onPressed: onReset,
-                          icon: const Icon(Icons.refresh, size: 18),
-                          label: const Text(
-                            'Periksa Karung Baru',
-                            style: TextStyle(fontSize: 12.5, fontWeight: FontWeight.bold),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 10),
-                            backgroundColor: const Color(0xFF0F766E),
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                    // Baris Tombol Sekunder: Salin Teks & Periksa Karung Baru
+                    Row(
+                      children: [
+                        // Salin Laporan ke Clipboard / WA
+                        Expanded(
+                          flex: 1,
+                          child: SizedBox(
+                            height: 44,
+                            child: OutlinedButton.icon(
+                              onPressed: () => _copyReportToClipboard(context),
+                              icon: const Icon(Icons.copy_rounded, size: 15),
+                              label: const Text(
+                                'Salin Teks',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                foregroundColor: const Color(0xFF334155),
+                                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
                             ),
-                            elevation: 1,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+
+                        // Tombol Scan Ulang / Karung Lainnya
+                        Expanded(
+                          flex: 1,
+                          child: SizedBox(
+                            height: 44,
+                            child: OutlinedButton.icon(
+                              onPressed: onReset,
+                              icon: const Icon(Icons.refresh_rounded, size: 16),
+                              label: const Text(
+                                'Periksa Baru',
+                                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8),
+                                foregroundColor: const Color(0xFF0F766E),
+                                side: const BorderSide(color: Color(0xFF0F766E)),
+                                backgroundColor: const Color(0xFF0F766E).withValues(alpha: 0.04),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

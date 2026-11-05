@@ -544,6 +544,13 @@ class _ScanScreenState extends State<ScanScreen> {
             if (_result != null)
               InspectionResultCard(
                 result: _result!,
+                sampleImageBytes: _scanMode == ScanMode.single
+                    ? _singleImage?.bytes
+                    : _sampleImage?.bytes,
+                actualImageBytes: _scanMode == ScanMode.single
+                    ? null
+                    : _actualImage?.bytes,
+                isSingleMode: _scanMode == ScanMode.single,
                 onReset: _resetAll,
               ),
           ],
