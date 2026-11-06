@@ -87,7 +87,6 @@ d:\PROJECTS\AIScann/
 ├── android/                               # Konfigurasi platform Android (Gradle Kotlin DSL & R8 rules)
 ├── test/
 │   └── inspection_result_test.dart        # Unit test & self-check parsing hasil AI
-├── prd.md                                 # Dokumen spesifikasi kebutuhan sistem
 ├── pubspec.yaml                           # Dependensi Flutter & registrasi aset
 └── README.md
 ```
