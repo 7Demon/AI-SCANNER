@@ -36,6 +36,10 @@ Aplikasi AIScann dapat langsung dipasang di smartphone Android tanpa perlu setup
   - Alokasi Base64 secara *lazy on-demand* (hemat 50% RAM heap).
   - Perakitan PDF dan pembacaan gambar berjalan di background worker isolate (`compute`), menjamin UI tetap mulus stabil pada 60 FPS.
   - Pengecilan ukuran APK via *R8 Code & Resource Shrinking*.
+- **🛡️ Ketahanan Tinggi (Chaos Resilient)**:
+  - Sanitasi otomatis output AI terhadap teks pengantar/penutup di luar JSON.
+  - Deserialisasi anti-crash pada payload respons anomali (tipe data anarkis/inkonsisten).
+  - Validasi byte foto aman terhadap noise/korupsi saat ekspor dokumen PDF.
 - **Mekanisme Dual API Key**:
   - **Kunci Default (Sistem / `.env`)**: Siap digunakan langsung tanpa perlu memasukkan kunci secara manual.
   - **Kunci Kustom Pengguna**: Tambahkan API key sendiri di menu Pengaturan dengan **Validasi Otomatis (Pre-Testing)** sebelum disimpan.
