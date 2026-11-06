@@ -463,9 +463,11 @@ class _ScanScreenState extends State<ScanScreen> {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            'Memeriksa akurasi teks, warna, alignment & cacat tinta...',
-                            style: TextStyle(
+                          Text(
+                            _loadingMessage.isNotEmpty
+                                ? _loadingMessage
+                                : 'Memeriksa akurasi teks, warna, alignment & cacat tinta...',
+                            style: const TextStyle(
                               fontSize: 11,
                               color: Color(0xFF64748B),
                             ),

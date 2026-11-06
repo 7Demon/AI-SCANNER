@@ -7,9 +7,15 @@ class CategoryDetail {
     required this.notes,
   });
 
-  factory CategoryDetail.fromJson(Map<String, dynamic>? json) {
+  factory CategoryDetail.fromJson(dynamic json) {
     if (json == null) {
       return CategoryDetail(match: false, notes: '-');
+    }
+    if (json is! Map) {
+      return CategoryDetail(
+        match: false,
+        notes: json.toString(),
+      );
     }
     return CategoryDetail(
       match: json['match'] == true,
@@ -56,20 +62,35 @@ class InspectionResult {
     Map<String, dynamic> json, {
     String modelUsed = 'gemini-3.1-flash-lite',
   }) {
-    final details = json['analysis_details'] as Map<String, dynamic>? ?? {};
+    final rawDetails = json['analysis_details'];
+    final Map<String, dynamic> details = (rawDetails is Map)
+        ? rawDetails.map((k, v) => MapEntry(k.toString(), v))
+        : {};
 
     // Parse defects list safely
-    final rawDefects = details['defects_found'] as List<dynamic>? ??
-        json['defects_found'] as List<dynamic>? ??
-        [];
-    final parsedDefects = rawDefects
-        .map((e) => e.toString())
-        .where((e) => e.trim().isNotEmpty)
-        .toList();
+    final rawDefects = details['defects_found'] ?? json['defects_found'];
+    final List<String> parsedDefects;
+    if (rawDefects is List) {
+      parsedDefects = rawDefects
+          .where((e) => e != null)
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+    } else if (rawDefects != null && rawDefects.toString().trim().isNotEmpty) {
+      parsedDefects = [rawDefects.toString().trim()];
+    } else {
+      parsedDefects = [];
+    }
 
-    final score = (json['similarity_score'] is num)
-        ? (json['similarity_score'] as num).toInt()
-        : int.tryParse(json['similarity_score']?.toString() ?? '0') ?? 0;
+    final scoreVal = json['similarity_score'];
+    final int score;
+    if (scoreVal is num) {
+      score = scoreVal.toInt();
+    } else {
+      final cleanScoreStr =
+          scoreVal?.toString().replaceAll(RegExp(r'[^0-9]'), '') ?? '0';
+      score = int.tryParse(cleanScoreStr) ?? 0;
+    }
 
     final rawStatus = (json['status']?.toString() ?? 'REVIEW').toUpperCase();
     final status = (rawStatus == 'PASS' || rawStatus == 'REJECT' || rawStatus == 'REVIEW')
@@ -94,15 +115,9 @@ class InspectionResult {
       isMatch: json['is_match'] == true || status == 'PASS',
       summary: json['summary']?.toString() ?? 'Hasil analisis kemiripan cetak.',
       scoreJustification: scoreJustification,
-      textAccuracy: CategoryDetail.fromJson(
-        details['text_accuracy'] as Map<String, dynamic>?,
-      ),
-      colorFidelity: CategoryDetail.fromJson(
-        details['color_fidelity'] as Map<String, dynamic>?,
-      ),
-      alignment: CategoryDetail.fromJson(
-        details['alignment'] as Map<String, dynamic>?,
-      ),
+      textAccuracy: CategoryDetail.fromJson(details['text_accuracy']),
+      colorFidelity: CategoryDetail.fromJson(details['color_fidelity']),
+      alignment: CategoryDetail.fromJson(details['alignment']),
       defects: parsedDefects,
       recommendations: json['recommendations']?.toString() ??
           'Silakan periksa kembali hasil cetakan fisik.',

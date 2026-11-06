@@ -496,24 +496,49 @@ Kembalikan HANYA dokumen JSON dengan struktur persis seperti ini:
         throw Exception('Konten analisis AI tidak ditemukan.');
       }
 
-      String rawText = partsList[0]['text']?.toString() ?? '';
-
-      // Bersihkan jika model menyisipkan markdown ```json ... ```
-      rawText = rawText.trim();
-      if (rawText.startsWith('```json')) {
-        rawText = rawText.substring(7);
-      } else if (rawText.startsWith('```')) {
-        rawText = rawText.substring(3);
-      }
-      if (rawText.endsWith('```')) {
-        rawText = rawText.substring(0, rawText.length - 3);
-      }
-      rawText = rawText.trim();
-
-      final Map<String, dynamic> parsedData = jsonDecode(rawText);
+      final String rawText = partsList[0]['text']?.toString() ?? '';
+      final Map<String, dynamic> parsedData = _extractJsonObject(rawText);
       return InspectionResult.fromJson(parsedData, modelUsed: activeModel);
     } catch (e) {
       throw Exception('Gagal membaca data hasil analisis AI: $e');
     }
+  }
+
+  /// Ekstraktor JSON cerdas dan tahan banting (resilient) dari teks output LLM
+  static Map<String, dynamic> _extractJsonObject(String rawText) {
+    var text = rawText.trim();
+
+    // 1. Ambil isi di dalam markdown fence ```json ... ``` atau ``` ... ``` jika ada
+    if (text.contains('```json')) {
+      final start = text.indexOf('```json') + 7;
+      final end = text.lastIndexOf('```');
+      if (end > start) {
+        text = text.substring(start, end);
+      }
+    } else if (text.contains('```')) {
+      final start = text.indexOf('```') + 3;
+      final end = text.lastIndexOf('```');
+      if (end > start) {
+        text = text.substring(start, end);
+      }
+    }
+
+    // 2. Jika ada teks pengantar di luar kurung kurawal, ambil substring dari '{' pertama ke '}' terakhir
+    final firstBrace = text.indexOf('{');
+    final lastBrace = text.lastIndexOf('}');
+    if (firstBrace != -1 && lastBrace != -1 && lastBrace > firstBrace) {
+      text = text.substring(firstBrace, lastBrace + 1);
+    }
+
+    text = text.trim();
+    final dynamic decoded = jsonDecode(text);
+
+    if (decoded is Map) {
+      return decoded.map((k, v) => MapEntry(k.toString(), v));
+    } else if (decoded is List && decoded.isNotEmpty && decoded.first is Map) {
+      return (decoded.first as Map).map((k, v) => MapEntry(k.toString(), v));
+    }
+
+    throw const FormatException('Respons AI tidak mengandung objek JSON yang valid.');
   }
 }

@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -530,12 +529,23 @@ class ReportService {
     Uint8List? actualImageBytes,
     bool isSingleMode = false,
   }) {
-    if (sampleImageBytes == null && actualImageBytes == null) {
+    pw.MemoryImage? safeMemoryImage(Uint8List? bytes) {
+      if (bytes == null || bytes.length < 16) return null;
+      try {
+        return pw.MemoryImage(bytes);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final sampleImg = safeMemoryImage(sampleImageBytes);
+    final actualImg = safeMemoryImage(actualImageBytes);
+
+    if (sampleImg == null && actualImg == null) {
       return pw.SizedBox();
     }
 
-    if (isSingleMode && sampleImageBytes != null) {
-      final image = pw.MemoryImage(sampleImageBytes);
+    if (isSingleMode && sampleImg != null) {
       return pw.Container(
         margin: const pw.EdgeInsets.only(bottom: 12),
         padding: const pw.EdgeInsets.all(8),
@@ -572,16 +582,13 @@ class ReportService {
                   border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0')),
                   borderRadius: const pw.BorderRadius.all(pw.Radius.circular(4)),
                 ),
-                child: pw.Image(image, fit: pw.BoxFit.contain),
+                child: pw.Image(sampleImg, fit: pw.BoxFit.contain),
               ),
             ),
           ],
         ),
       );
     }
-
-    final sampleImg = sampleImageBytes != null ? pw.MemoryImage(sampleImageBytes) : null;
-    final actualImg = actualImageBytes != null ? pw.MemoryImage(actualImageBytes) : null;
 
     return pw.Container(
       margin: const pw.EdgeInsets.only(bottom: 12),
